@@ -1,0 +1,51 @@
+# ============================================================
+# AI Meeting Assistant - requirements.txt
+# Python 3.10+ recommended (3.11 is a safe choice)
+# System dependency: ffmpeg must be installed separately
+#   Windows: winget install ffmpeg | macOS: brew install ffmpeg
+#   Ubuntu/Debian: sudo apt install ffmpeg
+# ============================================================
+
+# --- UI ---
+streamlit>=1.40.0
+
+# --- Audio ingestion (YouTube URLs + uploaded files) ---
+yt-dlp>=2024.10.0
+pydub>=0.25.1
+
+# --- Local speech-to-text (OpenAI Whisper, runs locally) ---
+# openai-whisper installs its own dependencies (numba, numpy, tiktoken, ...).
+# torch is listed below in the RAG section and is shared with sentence-transformers.
+openai-whisper>=20240930
+
+# --- LangChain core + LCEL ---
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+langchain-text-splitters>=0.3.0
+
+# --- LLM: Gemini (free API) for summary, action items, key decisions ---
+langchain-google-genai>=2.0.0
+
+# --- Translation: Hindi <-> English ---
+# GoogleTranslator has a ~5000 character limit per call, so chunk long transcripts.
+deep-translator>=1.11.4
+
+# --- RAG: ChromaDB + Hugging Face embeddings ---
+chromadb>=0.5.0
+langchain-chroma>=0.1.4
+langchain-huggingface>=0.1.0
+sentence-transformers>=3.0.0
+torch>=2.2.0
+
+# --- Export: PDF / TXT ---
+# fpdf2 + uharfbuzz enables correct Devanagari (Hindi) text shaping.
+# You will also need a Unicode font such as NotoSansDevanagari-Regular.ttf.
+fpdf2>=2.8.0
+uharfbuzz>=0.39.0
+
+# --- Utilities ---
+requests>=2.32.0
+python-dotenv>=1.0.1
+pydantic>=2.7.0
+tqdm>=4.66.0
