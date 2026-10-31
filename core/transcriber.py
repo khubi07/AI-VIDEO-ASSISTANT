@@ -1,42 +1,52 @@
-import whisper
 import os
+from huggingface_hub import snapshot_download
+from faster_whisper import WhisperModel
 
-WHISPER_MODEL    = os.getenv("WHISPER_MODEL", "small")
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+MODEL_REPO = f"Systran/faster-whisper-{WHISPER_MODEL}"
 
 _model = None
 
+
 def load_model():
+    global _model
 
-    global _model  
+    if _model is None:
+        print(f"Preparing Faster-Whisper model: {WHISPER_MODEL}", flush=True)
 
-    if _model is None: 
-        print(f"Loading Whisper model: {WHISPER_MODEL} ...")
-        _model = whisper.load_model(WHISPER_MODEL) 
-        print("Whisper model loaded.")
-    return _model 
+        print(f"Checking/downloading model files from {MODEL_REPO}...", flush=True)
+        model_dir = snapshot_download(repo_id=MODEL_REPO)
+        print(f"Model files ready at: {model_dir}", flush=True)
 
-#transcribe 1 chunk
+        print("Loading model into memory...", flush=True)
+        _model = WhisperModel(model_dir, device="cpu", compute_type="int8")
+        print("Faster-Whisper model loaded.", flush=True)
+
+    return _model
+
+
 def transcribe_chunks(chunk_path: str, translate: bool = False) -> str:
-    #If Someone passes the value of `translate` as `true` Means audio will be converted from Hindi to English. 
-    #If the `translate` value is not passed, the default value will be taken as `false`. That means no translation will take place. 
-
-    model = load_model
-
+    model = load_model()
     task = "translate" if translate else "transcribe"
-    #This is known as ternary if-else. If `translate` is true, the value of `task` is `translate`; otherwise, `transcribe`. 
-    result = model.transcribe(chunk_path, task="transcribe")
-    return result["text"]
 
-#transcribe all chunk
-#We have separated the transcription of one chunk with all, So if an error comes in between, we can catch it. 
+    print(f"Transcribing: {chunk_path}", flush=True)
+    segments, info = model.transcribe(chunk_path, task=task)
+
+    # Faster-Whisper returns a lazy iterator, so consume it to run transcription.
+    text = " ".join(segment.text.strip() for segment in segments).strip()
+
+    if not isinstance(text, str):
+        raise TypeError("Faster-Whisper returned non-string transcription text")
+
+    print(f"Finished: {chunk_path}", flush=True)
+    return text
+
 
 def transcribe_all(chunks: list, translate: bool = False) -> str:
+    transcripts = []
 
-    full_transcript = ""
+    for index, chunk in enumerate(chunks, start=1):
+        print(f"Transcribing chunk {index}/{len(chunks)}", flush=True)
+        transcripts.append(transcribe_chunks(chunk, translate=translate))
 
-    for i, chunk in enumerate(chunks):
-        text = transcribe_chunks(chunk, translate=translate)
-
-        full_transcript += text + " "
-
-    return full_transcript
+    return " ".join(transcripts)
