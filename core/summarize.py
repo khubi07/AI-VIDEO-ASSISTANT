@@ -5,10 +5,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 
 import os
+from pydantic import SecretStr
 
 def get_llm():
-    return ChatMistralAI(model="mistral-small-latest",
-                          mistral_api_key = os.getenv("MISTRAL_API"),
+    api_key = os.getenv("MISTRAL_API")
+    return ChatMistralAI(model_name="mistral-small-latest",
+                          api_key=SecretStr(api_key) if api_key is not None else None,
                           temperature=0.3
                           )
 
