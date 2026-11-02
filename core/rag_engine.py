@@ -1,5 +1,5 @@
 import os
-from langchain_mistralai import ChatMistralAI
+from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
@@ -7,8 +7,8 @@ from core.vector_store import build_vector_store, load_vector_store, get_retriev
 from pydantic import SecretStr
 
 def get_llm():
-    api_key = os.getenv("MISTRAL_API")
-    return ChatMistralAI(model_name="mistral-small-latest",
+    api_key = os.getenv("GEMINI_API_KEY")
+    return GoogleGenerativeAI(model_name="gemini-3.5-flash-lite",
                           api_key=SecretStr(api_key) if api_key is not None else None,
                           temperature=0.3
                           )
