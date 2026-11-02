@@ -7,7 +7,7 @@ from pydantic import SecretStr
 
 def get_llm():
     api_key = os.getenv("GEMINI_API_KEY")
-    return GoogleGenerativeAI(model_name="gemini-3.5-flash-lite",
+    return GoogleGenerativeAI(model="gemini-3.5-flash-lite",
                           api_key=SecretStr(api_key) if api_key is not None else None,
                           temperature=0.3
                           )
