@@ -1,6 +1,9 @@
 from pathlib import Path
 from uuid import uuid4
-
+from uuid import uuid4
+import re
+from fastapi import BackgroundTasks
+from api.jobs import jobs, process_video
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, HttpUrl
 
@@ -39,19 +42,42 @@ class VideoAccepted(BaseModel):
     status: str
     url: HttpUrl
 
+class JobAccepted(BaseModel):
+    job_id: str
+    status: str
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 
-@app.post("/videos", response_model=VideoAccepted)
-def create_video(request: VideoRequest):
+@app.post("/videos", response_model=JobAccepted, status_code=202)
+def create_video(
+    request: VideoRequest,
+    background_tasks: BackgroundTasks,
+):
+    job_id = uuid4().hex
+    jobs[job_id] = {"status": "queued"}
+
+    background_tasks.add_task(
+        process_video,
+        job_id,
+        str(request.url),
+    )
+
     return {
-        "status": "accepted",
-        "url": request.url,
+        "job_id": job_id,
+        "status": "queued",
     }
 
+@app.get("/jobs/{job_id}")
+def get_job(job_id: str):
+    job = jobs.get(job_id)
+
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    return {"job_id": job_id, **job}
 
 @app.post("/uploads")
 async def upload_media(file: UploadFile = File(...)):
@@ -99,3 +125,25 @@ async def upload_media(file: UploadFile = File(...)):
         "filename": original_name,
         "size_bytes": size_bytes,
     }
+
+@app.post("/uploads/{upload_id}/process", response_model=JobAccepted, status_code=202)
+def process_upload(upload_id: str, background_tasks: BackgroundTasks):
+    if not re.fullmatch(r"[a-f0-9]{32}", upload_id):
+        raise HTTPException(status_code=404, detail="Upload not found.")
+
+    matches = list(UPLOAD_DIR.glob(f"{upload_id}.*"))
+    if len(matches) != 1:
+        raise HTTPException(status_code=404, detail="Upload not found.")
+
+    uploaded_file = matches[0]
+    job_id = uuid4().hex
+    jobs[job_id] = {"status": "queued"}
+
+    background_tasks.add_task(
+        process_video,
+        job_id,
+        str(uploaded_file),
+        uploaded_file,
+    )
+
+    return {"job_id": job_id, "status": "queued"}
