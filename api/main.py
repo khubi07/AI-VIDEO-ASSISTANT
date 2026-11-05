@@ -6,7 +6,14 @@ from fastapi import BackgroundTasks
 from api.jobs import jobs, process_video
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, HttpUrl
+from pydantic import Field
+from core.rag_engine import ask_question
+from api.jobs import rag_chains
+import logging
+from fastapi.middleware.cors import CORSMiddleware
 
+
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = PROJECT_ROOT / "uploads"
@@ -33,6 +40,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class VideoRequest(BaseModel):
     url: HttpUrl
@@ -45,6 +60,9 @@ class VideoAccepted(BaseModel):
 class JobAccepted(BaseModel):
     job_id: str
     status: str
+
+class ChatRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
 
 @app.get("/health")
 def health_check():
@@ -147,3 +165,34 @@ def process_upload(upload_id: str, background_tasks: BackgroundTasks):
     )
 
     return {"job_id": job_id, "status": "queued"}
+
+@app.post("/jobs/{job_id}/chat")
+def chat_with_video(job_id: str, request: ChatRequest):
+    job = jobs.get(job_id)
+
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    if job.get("status") != "completed":
+        raise HTTPException(
+            status_code=409,
+            detail="This video is not ready for chat yet.",
+        )
+
+    rag_chain = rag_chains.get(job_id)
+    if rag_chain is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat is not available for this job.",
+        )
+
+    try:
+        answer = ask_question(rag_chain, request.question)
+    except Exception:
+        logger.exception("Chat request failed. job_id=%s", job_id)
+        raise HTTPException(
+            status_code=502,
+            detail="The assistant could not answer right now. Please try again.",
+        )
+
+    return {"job_id": job_id, "answer": answer}
