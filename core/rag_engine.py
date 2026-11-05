@@ -16,12 +16,10 @@ def get_llm():
 def format_docs(docs):
     return "\n\n".join([doc.page_content for doc in docs])
 
-def build_rag_chain(transcript:str):
-
-    vector_store = build_vector_store(transcript)
-
+def build_rag_chain(transcript: str, session_id: str):
+    collection_name = f"meeting_{session_id}"
+    vector_store = build_vector_store(transcript, collection_name)
     retriever = get_retriever(vector_store, k = 4)
-
     llm = get_llm()
 
     prompt = ChatPromptTemplate.from_messages(
@@ -54,10 +52,10 @@ Context from meeting transcript:
 
     return rag_chain
 
-def load_rag_chain():
-    vector_store = load_vector_store()
+def load_rag_chain(session_id: str):
+    collection_name = f"meeting_{session_id}"
+    vector_store = load_vector_store(collection_name)
     retriever = get_retriever(vector_store, k=4)
-
     llm = get_llm()
     prompt = ChatPromptTemplate.from_messages([
         (

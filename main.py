@@ -4,7 +4,7 @@ from core.transcriber import transcribe_all
 from core.summarize import summarize, generate_title
 from core.extractor import extract_action_items, extract_key_decisions, extract_questions
 from core.rag_engine import build_rag_chain, ask_question
-
+from uuid import uuid4
 
 load_dotenv()
 
@@ -25,7 +25,8 @@ def run_pipeline(source :str) -> dict:
     decisions = extract_key_decisions(transcript)
     questions = extract_questions(transcript)
     
-    rag_chain = build_rag_chain(transcript)
+    session_id = str(uuid4())
+    rag_chain = build_rag_chain(transcript, session_id)
 
     return {
         "title": title,
@@ -35,6 +36,7 @@ def run_pipeline(source :str) -> dict:
         "key_decisions": decisions,
         "open_questions": questions,
         "rag_chain": rag_chain,
+        "session_id": session_id,
     }
 
 if __name__ == "__main__":

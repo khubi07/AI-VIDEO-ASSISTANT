@@ -1,5 +1,6 @@
 .env
 notes.txt
-downloads
+downloads/
 .venv
 vector_db
+uploads/
