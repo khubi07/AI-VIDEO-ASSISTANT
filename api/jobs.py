@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from main import run_pipeline
-
+from api.database import set_job_status
 logger = logging.getLogger(__name__)
 
 jobs = {}
@@ -10,16 +10,18 @@ rag_chains = {}
 
 
 def process_video(job_id: str, source: str, uploaded_file: Path | None = None):
-    jobs[job_id] = {"status": "processing"}
+    set_job_status(job_id, "processing")
 
     try:
         result = run_pipeline(source)
         rag_chains[job_id] = result.pop("rag_chain")
 
-        jobs[job_id] = {
-            "status": "completed",
-            "result": result,
-        }
+        set_job_status(
+            job_id,
+            "completed",
+            session_id=result["session_id"],
+            result=result,
+        )
 
     except Exception:
         logger.exception("Video processing failed. job_id=%s", job_id)
@@ -31,3 +33,4 @@ def process_video(job_id: str, source: str, uploaded_file: Path | None = None):
     finally:
         if uploaded_file is not None:
             uploaded_file.unlink(missing_ok=True)
+

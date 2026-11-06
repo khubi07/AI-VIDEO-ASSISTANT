@@ -4,3 +4,5 @@ downloads/
 .venv
 vector_db
 uploads/
+app_data/
+video_assistant.db
