@@ -10,14 +10,13 @@
 streamlit>=1.40.0
 
 # --- Audio ingestion (YouTube URLs + uploaded files) ---
-yt-dlp>=2024.10.0
 pydub>=0.25.1
 yt-dlp[default]>=2024.10.0
 
 # --- Local speech-to-text (OpenAI Whisper, runs locally) ---
 # openai-whisper installs its own dependencies (numba, numpy, tiktoken, ...).
 # torch is listed below in the RAG section and is shared with sentence-transformers.
-openai-whisper>=20240930
+faster-whisper
 
 # --- LangChain core + LCEL ---
 langchain>=0.3.0
