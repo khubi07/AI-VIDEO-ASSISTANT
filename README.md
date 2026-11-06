@@ -43,6 +43,18 @@ flowchart LR
 | Job storage | SQLite |
 | Media handling | yt-dlp, FFmpeg, pydub |
 
+## Screenshots
+
+Add captures to `docs/screenshots/` and uncomment the matching image line below.
+
+### Workspace
+
+<!-- ![Framewise workspace](docs/screenshots/workspace.png) -->
+
+### Video brief and RAG chat
+
+<!-- ![Generated video brief and RAG chat](docs/screenshots/video-brief-chat.png) -->
+
 ## Requirements
 
 - Python 3.10 or newer
