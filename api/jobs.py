@@ -25,10 +25,11 @@ def process_video(job_id: str, source: str, uploaded_file: Path | None = None):
 
     except Exception:
         logger.exception("Video processing failed. job_id=%s", job_id)
-        jobs[job_id] = {
-            "status": "failed",
-            "error": "Video processing failed. Check the media and try again.",
-        }
+        set_job_status(
+            job_id,
+            "failed",
+            error="Video processing failed. Check the media and try again.",
+        )
 
     finally:
         if uploaded_file is not None:

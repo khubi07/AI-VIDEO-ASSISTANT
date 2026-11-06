@@ -12,6 +12,7 @@ streamlit>=1.40.0
 # --- Audio ingestion (YouTube URLs + uploaded files) ---
 yt-dlp>=2024.10.0
 pydub>=0.25.1
+yt-dlp[default]>=2024.10.0
 
 # --- Local speech-to-text (OpenAI Whisper, runs locally) ---
 # openai-whisper installs its own dependencies (numba, numpy, tiktoken, ...).

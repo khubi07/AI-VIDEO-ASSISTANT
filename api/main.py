@@ -191,12 +191,16 @@ def chat_with_video(job_id: str, request: ChatRequest):
     rag_chain = rag_chains.get(job_id)
 
     if rag_chain is None:
-        rag_chain = load_rag_chain(job["session_id"])
+        session_id = job.get("session_id")
+
+        if not session_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Chat is not available for this job.",
+            )
+
+        rag_chain = load_rag_chain(session_id)
         rag_chains[job_id] = rag_chain
-        raise HTTPException(
-            status_code=404,
-            detail="Chat is not available for this job.",
-        )
 
     try:
         answer = ask_question(rag_chain, request.question)
